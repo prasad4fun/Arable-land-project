@@ -6,88 +6,47 @@ var fs = require('fs'),
 
     var inStream = fs.createReadStream('../../data files/WDI_Data.csv');
     var outStream1 = fs.createWriteStream('../../data files/json/arableContinent.json');
-    var hectares = [];
     var rl = readLine.createInterface(inStream,outStream1);
+    var jsonObject=[];
     rl.on('line',function(line){
           var content = line.split(",");
           if(content[0]=="Country Name"){
             headers = content;
-            headers.push("Continent");
           }
-          else{
-            var obj = {};
-            if(content[2]=="Arable land (hectares)"){
-              var valid_country = content.insert(content.length,content[0]);
-              if(valid_country){
-                for(i in content) {
-                if(i!="")
-                {
-                  obj[headers[i]] = isNaN(parseFloat(content[i])) ? (content[i]) : parseFloat(content[i]);
-                }
-                //if(i>3) year[header[i]] = parseFloat(content[i]);
-              }
-              Aggregate[obj["Continent"]]+=;
-              hectares.push(obj);
+          else if(content[2]=="Arable land (hectares)"){
+            for(var i=4;i<=headers.length-1;i++){
+              if(continents[content[0]]){
+                if(aggregate[continents[content[0]]][headers[i]]==undefined)
+                aggregate[continents[content[0]]][headers[i]]=0;
+                  aggregate[continents[content[0]]][headers[i]]+=
+                  isNaN(parseFloat(content[i]))?0:parseFloat(content[i]);
               }
             }
           }
       });
-var aggregation = [];
-    rl.on('close',function() {
-      var stringify = (JSON.stringify(hectares));
-      var json = JSON.parse(stringify);
-      //console.log(headers[4] +"        "+headers[headers.length-1]);
-      for(var j=headers[4];j<=headers[headers.length-2];j++){
-        var result={};
 
-        for(var i=0;i<json.length;i++){
-          aggregate[json[i]["Continent"]] += isNaN(parseInt(json[i][j+""])) ? 0:parseInt(json[i][j+""]);
-        }
-
-        //result[j+""]=aggregate;
-        result["Year"]=j+"";
-        result["AFRICA"]=aggregate["AFRICA"];
-        result["ASIA"]=aggregate["ASIA"];
-        result["AUSTRALIA"]=aggregate["AUSTRALIA"];
-        result["EUROPE"]=aggregate["EUROPE"];
-        result["S_AMERICA"]=aggregate["S_AMERICA"];
-        result["N_AMERICA"]=aggregate["N_AMERICA"];
-        //console.log(result[j+""])
-        aggregation.push(result);
-
-        aggregate = {
-          'AFRICA':yearsAfrica,
-          'ASIA':yearsAsia,
-          'AUSTRALIA':yearsAustralia,
-          'EUROPE':yearsEurope,
-          'S_AMERICA':yearsS_america,
-          'N_AMERICA':yearsN_america
-        };
-      }
-       outStream1.write(JSON.stringify(aggregation));
-    });
-
-
-/* function to insert continent values */
-Array.prototype.insert = function (index, item) {
-  this.splice(index, 0, continents[item]);
-  if(typeof continents[item] === 'undefined'){
-    return false;
-  }
-  else{
-    return true;
-  }
+rl.on('close',function(){
+var continentsAggregate = (JSON.parse(JSON.stringify(aggregate)));
+//console.log(continentsAggregate["ASIA"][1990]);
+for(var j=4;j<headers.length;j++){
+  var result={};
+  for(i in aggregate){
+    result["Year"]=headers[j];
+    result[i]=continentsAggregate[i][headers[j]+""];
+    //console.log(result);
+  }jsonObject.push(result);
 }
-/*Aggregate object */
-var aggregate = {
-  'AFRICA':0,
-  'ASIA':0,
-  'AUSTRALIA':0,
-  'EUROPE':0,
-  'S_AMERICA':0,
-  'N_AMERICA':0
-};
+outStream1.write(JSON.stringify(jsonObject));
+});
 
+var aggregate = {
+  'AFRICA':{},
+  'ASIA':{},
+  'AUSTRALIA':{},
+  'EUROPE':{},
+  'S_AMERICA':{},
+  'N_AMERICA':{}
+};
 
 var continents = {
   /* AFRICA */

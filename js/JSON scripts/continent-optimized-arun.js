@@ -1,95 +1,10 @@
-var fs = require('fs'),
-    csvrow = require('csvrow'),
-    readLine = require('readline'),
-    stream = require('stream');
-
-
-    var inStream = fs.createReadStream('../../data files/WDI_Data.csv');
-    var outStream1 = fs.createWriteStream('../../data files/json/arableContinent.json');
-    var hectares = [];
-    var rl = readLine.createInterface(inStream,outStream1);
-    rl.on('line',function(line){
-          var content = line.split(",");
-          if(content[0]=="Country Name"){
-            headers = content;
-            headers.push("Continent");
-          }
-          else{
-            var obj = {};
-            if(content[2]=="Arable land (hectares)"){
-              var valid_country = content.insert(content.length,content[0]);
-              if(valid_country){
-                for(i in content) {
-                if(i!="")
-                {
-                  obj[headers[i]] = isNaN(parseFloat(content[i])) ? (content[i]) : parseFloat(content[i]);
-                }
-                //if(i>3) year[header[i]] = parseFloat(content[i]);
-              }
-              Aggregate[obj["Continent"]]+=;
-              hectares.push(obj);
-              }
-            }
-          }
-      });
-var aggregation = [];
-    rl.on('close',function() {
-      var stringify = (JSON.stringify(hectares));
-      var json = JSON.parse(stringify);
-      //console.log(headers[4] +"        "+headers[headers.length-1]);
-      for(var j=headers[4];j<=headers[headers.length-2];j++){
-        var result={};
-
-        for(var i=0;i<json.length;i++){
-          aggregate[json[i]["Continent"]] += isNaN(parseInt(json[i][j+""])) ? 0:parseInt(json[i][j+""]);
-        }
-
-        //result[j+""]=aggregate;
-        result["Year"]=j+"";
-        result["AFRICA"]=aggregate["AFRICA"];
-        result["ASIA"]=aggregate["ASIA"];
-        result["AUSTRALIA"]=aggregate["AUSTRALIA"];
-        result["EUROPE"]=aggregate["EUROPE"];
-        result["S_AMERICA"]=aggregate["S_AMERICA"];
-        result["N_AMERICA"]=aggregate["N_AMERICA"];
-        //console.log(result[j+""])
-        aggregation.push(result);
-
-        aggregate = {
-          'AFRICA':yearsAfrica,
-          'ASIA':yearsAsia,
-          'AUSTRALIA':yearsAustralia,
-          'EUROPE':yearsEurope,
-          'S_AMERICA':yearsS_america,
-          'N_AMERICA':yearsN_america
-        };
-      }
-       outStream1.write(JSON.stringify(aggregation));
-    });
-
-
-/* function to insert continent values */
-Array.prototype.insert = function (index, item) {
-  this.splice(index, 0, continents[item]);
-  if(typeof continents[item] === 'undefined'){
-    return false;
-  }
-  else{
-    return true;
-  }
-}
-/*Aggregate object */
-var aggregate = {
-  'AFRICA':0,
-  'ASIA':0,
-  'AUSTRALIA':0,
-  'EUROPE':0,
-  'S_AMERICA':0,
-  'N_AMERICA':0
-};
-
+var header = new Array();
+var dataRow = new Array();
+var jsonText;
+fs=require('fs');
 
 var continents = {
+
   /* AFRICA */
   'Algeria' : 'AFRICA',
   'Angola' : 'AFRICA',
@@ -148,7 +63,6 @@ var continents = {
 
   /* ASIA */
   'Afghanistan' : 'ASIA',
-  'Arab World' : 'ASIA',
   'Bahrain' : 'ASIA',
   'Bangladesh' : 'ASIA',
   'Bhutan' : 'ASIA',
@@ -243,9 +157,6 @@ var continents = {
   'Vatican City' : 'EUROPE',
 
   /* N_AMERICA */
-  'Caribbean small states' : 'N_AMERICA',
-  'Latin America & Caribbean (all income levels)' : 'N_AMERICA',
-  'Latin America & Caribbean (developing only)' : 'N_AMERICA',
   'Antigua and Barbuda' : 'N_AMERICA',
   'Bahamas' : 'N_AMERICA',
   'Barbados' : 'N_AMERICA',
@@ -300,3 +211,137 @@ var continents = {
   'Uruguay' : 'S_AMERICA',
   'Venezuela' : 'S_AMERICA'
 };
+
+function processFile() {
+
+          var rd = require('readline').createInterface({
+              input: require('fs').createReadStream('WDI_Data_All.csv')
+          });
+
+          var csvrow=require('csvrow');
+
+          var headerReadIndc = true;
+          var lineCount=0;
+
+          console.log("\n\nReading the file...\n");
+
+          rd.on('line', function(line) {
+
+              var arr = csvrow.parse(line);
+              var lineLength = arr.length;
+
+              if(headerReadIndc){
+                header.push(arr);
+                headerReadIndc=false;
+              }
+              else{if (arr[2].toLowerCase().indexOf("arable land (")!=-1) {
+                      dataRow.push(arr);
+                  }
+                }
+              }).on('close', function() {
+              console.log('Closing the data file. ' + dataRow.length+' lines read into memory excluding the header.\n');
+              console.log(dataRow.length);
+              writeOutput();
+          });
+}
+
+function writeOutput(argument) {
+
+  var resultIndia=new Array();
+  var resultAfrica=new Array();
+  var resultContinent=new Array();
+
+  var count=0;
+  var indiaCnt=0;
+  var africaCnt=0;
+
+  var yearsAsia={};
+  var yearsAfrica={};
+  var yearsEurope={};
+  var yearsAustralia={};
+  var yearsNAmerica={};
+  var yearsSAmerica={};
+
+  for(var i=4;i<header[0].length;i++)
+  {
+    yearsAsia[header[0][i]]=0.0;
+    yearsAfrica[header[0][i]]=0.0;
+    yearsEurope[header[0][i]]=0.0;
+    yearsAustralia[header[0][i]]=0.0;
+    yearsNAmerica[header[0][i]]=0.0;
+    yearsSAmerica[header[0][i]]=0.0;
+  }
+  //console.log(years);
+
+  var aggr={
+    'ASIA' : yearsAsia,
+    'AFRICA' : yearsAfrica,
+    'EUROPE' : yearsEurope,
+    'AUSTRALIA' : yearsAustralia,
+    'N_AMERICA' : yearsNAmerica,
+    'S_AMERICA' : yearsSAmerica};
+
+  try{
+      for(i in dataRow)
+      {
+        var JSONObj={};
+
+              if (continents[dataRow[i][0]]==='AFRICA'||dataRow[i][0].toLowerCase()=='india') {
+
+                for(j=4;j<header[0].length;j++)
+                {
+                  var pair=new Object();
+
+                            if(dataRow[i][j]!==''){
+                              pair["Year"]=header[0][j];
+                              pair["Value"]=parseFloat(dataRow[i][j]);
+                            }
+                            else
+                              {
+                                pair["Year"]=header[0][j];
+                                pair["Value"]=0.0;
+                              }
+
+                              if(dataRow[i][0].toLowerCase()=='india'){
+                                resultIndia.push(pair);
+                                //console.log("Pushing "+pair);
+                              }
+                              else {
+                                resultAfrica.push(pair);
+                              }
+                  }
+
+              }
+
+              if(continents[dataRow[i][0]]!=undefined){
+              var j=3;
+                 for(var x in yearsAsia){
+                   j++;
+                   if(dataRow[i][j]=='')
+                   dataRow[i][j]=0.0;
+                   var temp=parseFloat(dataRow[i][j]);
+                   aggr[continents[dataRow[i][0]]][x]+=temp;
+                 }
+              }
+      }
+    }
+    catch(err){
+      console.log("Process failed*******************************\n"+err);
+    }
+      console.log("Write begins...");
+      fs.writeFile('india_arable.txt', JSON.stringify(resultIndia), function (err) {
+      if (err) return console.log(err);
+      console.log("File 1 - india_arable.txt written Successfully.");
+    });
+
+    fs.writeFile('african_ctry_arable.txt', JSON.stringify(resultAfrica), function (err) {
+    if (err) return console.log(err);
+    console.log("File 2 - african_ctry_arable.txt written Successfully.");
+    });
+
+    fs.writeFile('continentsAggregate.txt', JSON.stringify(aggr), function (err) {
+    if (err) return console.log(err);
+    console.log("File 3 - continentsAggregate.txt written Successfully.");
+  });
+}
+processFile();
